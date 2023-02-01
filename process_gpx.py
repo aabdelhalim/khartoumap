@@ -1,21 +1,63 @@
 import pandas as pd
 import argparse
+import os
 from gpxplotter import (
     read_gpx_file,
 )
+import glob
 import warnings
 from Helpers import folium_plot
 from DataController.ValhallaController import Valhalla
+
 warnings.filterwarnings("ignore")
 
 
+def streamOfFiles(data, Args):
+
+    MapPlot(data , Args)
+    processed_files = set()
+    print('\n##################################################\n')
+    print('Running Valhalla Map Matching (Meili)')
+
+    if Args.gpx in processed_files:
+        return
+        
+    processed_files.add(Args.gpx)
+    data = data.sort_values(by=['time'], ascending=True)
+    valhalla = Valhalla(data)
+    data = valhalla.valhalla_df()
+    PlotValhalla(data, Args)
+    valhalla.valhalla_df().drop(['time'], axis=1).to_csv(f'{Args.gpx[:-4]}_output.csv', index=False)
+            # valhalla.valhalla_df().to_csv(f'{Args.gpx[:-4]}.csv', index=False)
+    print(f'Track data saved in gpx directory as: {Args.gpx[:-4]}.csv')
+    print('\n#######################################\n')
+  
+  
+
+def process_files(directory):
+
+    tracking = 0
+    processed_files = set()
+    for filename in os.listdir(directory):
+        if filename.endswith(".gpx"):
+            if filename not in processed_files:
+                processed_files.add(filename)
+                Args = argparse.Namespace(gpx=os.path.join(directory, filename))
+                data = GetDataFromGPXFolder(os.path.join(directory, filename))
+                for track in data:
+                       track_data = CreateDataFrame(track)
+                       streamOfFiles(track_data, Args)
+                       tracking += 1
+                       print(f'file {tracking} processed: {filename}')     
+        else:
+            continue
 
 
 ################ Plotting ################
 
-def MapPlot(data , Args):
-    """
+def MapPlot(data, Args):
 
+    """
     :param data:
     :return:
     """
@@ -32,7 +74,7 @@ def MapPlot(data , Args):
     print(f'Track map saved in script directory as: {Args.gpx[:-4]}_plot.html')
 
 
-def PlotValhalla(data , Args):
+def PlotValhalla(data, Args):
     """
     :param data:
     :return:
@@ -41,6 +83,13 @@ def PlotValhalla(data , Args):
     the_map = folium_plot(data)
     the_map.save(f'{Args.gpx[:-4]}_valhalla_plot.html')
     print(f'Map Matching Successful! See: {Args.gpx[:-4]}_valhalla_plot.html')
+
+
+def GetDataFromGPXFolder(file_path=None):
+    tracks = []
+    for track in read_gpx_file(file_path):
+        tracks.append(track)
+    return tracks
 
 
 def GetDataFromGPX():
@@ -74,7 +123,6 @@ def ArgsOptions(data):
     """
 
     if Args.output:
-
         # data.drop(['time'], axis=1).to_csv(f'{Args.gpx[:-4]}_output.csv', index=False)
         data.to_csv(f'{Args.gpx[:-4]}.csv', index=False)
         print(f'Track data saved in gpx directory as: {Args.gpx[:-4]}.csv')
@@ -88,7 +136,6 @@ def ArgsOptions(data):
         valhalla = Valhalla(data)
         data = valhalla.valhalla_df()
         PlotValhalla(data, Args)
-
 
         if Args.output:
             valhalla.valhalla_df().drop(['time'], axis=1).to_csv(f'{Args.gpx[:-4]}_output.csv', index=False)
@@ -108,11 +155,16 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', action='store_true', help='Produce output csv files.')
     parser.add_argument('-v', '--valhalla', action='store_true', help='Use Valhalla map matching (beta).')
     parser.add_argument('-j', '--geojson', action='store_true', help='Produce A geojson output (beta).')
+    parser.add_argument('-d', '--directory', help='GPX files directory.')
     Args = parser.parse_args()
 
-    GPXdata = GetDataFromGPX()
-    data = CreateDataFrame(GPXdata)
-    MapPlot(data, Args)
-    ArgsOptions(data)
-    print('Done!')
-    print('\n#####################################################################\n')
+    if Args.directory:
+        process_files(Args.directory)
+    else:
+    
+        data = GetDataFromGPX()
+        data = CreateDataFrame(data)
+        MapPlot(data, Args)
+        ArgsOptions(data)
+        print('Done!')
+        print('\n#####################################################################\n')
