@@ -1,35 +1,20 @@
-The KhartouMap Initiative
-=========================
-
- 
+# The KhartouMap Initiative
 
 Mapping the public transit of the Greater Khartoum area.
---------------------------------------------------------
 
- 
+## Introduction
 
-This repository will contain all data and source code related to the KhartouMap
-project.
+This repository contains all data and source code related to the KhartouMap project.
 
- 
+## Contribution 1: Valhalla Meili Integration for GPX Processing
 
-### Contribution \#1: Valhalla Meili integration for GPX processing
+### Notes on Processing Steps
 
- 
+To be updated.
 
-#### Notes on processing steps:
+### Process GPX Arguments
 
--   To be updated.
-
-    -    
-
- 
-
-#### Process GPX Arguments:
-
-\-g / --gpx (Followed by GPX file name to specify the file to process.)
-
-\-o / --output (Optional flag to produce output CSV for track.)
-
-\-v / --valhalla (Optional lag to use Valhalla Meili for GPX tracks map
-matching.)
+- `-g / --gpx` (Followed by GPX file name to specify the file to process.)
+- `-o / --output` (Optional flag to produce output CSV for track.)
+- `-v / --valhalla` (Optional flag to use Valhalla Meili for GPX tracks map matching.)
+- `-d / --directory` (Optional flag to use Valhalla Meili and produce output CSV files to GPX tracks in a directory.)
