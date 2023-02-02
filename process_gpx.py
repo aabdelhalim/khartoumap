@@ -5,58 +5,36 @@ from gpxplotter import (
     read_gpx_file,
 )
 import glob
+import natsort
 import warnings
 from Helpers import folium_plot
 from DataController.ValhallaController import Valhalla
 
 warnings.filterwarnings("ignore")
 
-
-def streamOfFiles(data, Args):
-
+def MapPlotDir(data, Args):  
     MapPlot(data , Args)
-    processed_files = set()
-    print('\n##################################################\n')
-    print('Running Valhalla Map Matching (Meili)')
 
-    if Args.gpx in processed_files:
-        return
-        
-    processed_files.add(Args.gpx)
-    data = data.sort_values(by=['time'], ascending=True)
-    valhalla = Valhalla(data)
-    data = valhalla.valhalla_df()
-    PlotValhalla(data, Args)
-    valhalla.valhalla_df().drop(['time'], axis=1).to_csv(f'{Args.gpx[:-4]}_output.csv', index=False)
-            # valhalla.valhalla_df().to_csv(f'{Args.gpx[:-4]}.csv', index=False)
-    print(f'Track data saved in gpx directory as: {Args.gpx[:-4]}.csv')
-    print('\n#######################################\n')
-  
-  
-
-def process_files(directory):
-
+def process_files(directory, Args):
     tracking = 0
     processed_files = set()
-    for filename in os.listdir(directory):
-        if filename.endswith(".gpx"):
-            if filename not in processed_files:
-                processed_files.add(filename)
-                Args = argparse.Namespace(gpx=os.path.join(directory, filename))
-                data = GetDataFromGPXFolder(os.path.join(directory, filename))
-                for track in data:
-                       track_data = CreateDataFrame(track)
-                       streamOfFiles(track_data, Args)
-                       tracking += 1
-                       print(f'file {tracking} processed: {filename}')     
-        else:
-            continue
+    gpx_files = natsort.natsorted(glob.glob(os.path.join(directory, '*.gpx')))
+    for filename in gpx_files:
+        if filename not in processed_files:
+            processed_files.add(filename)
+            Args.gpx = filename
+            data = GetDataFromGPXFolder(filename)
+            for track in data:
+                   track_data = CreateDataFrame(track)
+                   MapPlotDir(track_data, Args)
+                   ArgsOptions(track_data, Args)
+                   tracking += 1
+                   print(f'file {tracking} processed: {filename}')
 
 
 ################ Plotting ################
 
 def MapPlot(data, Args):
-
     """
     :param data:
     :return:
@@ -92,6 +70,7 @@ def GetDataFromGPXFolder(file_path=None):
     return tracks
 
 
+
 def GetDataFromGPX():
     for track in read_gpx_file(Args.gpx):
         data = track
@@ -116,7 +95,7 @@ def CreateDataFrame(GPXdata):
     return data
 
 
-def ArgsOptions(data):
+def ArgsOptions(data , Args = None):
     """
     :param data:
     :return:
@@ -129,7 +108,7 @@ def ArgsOptions(data):
     print('\n#####################################################################\n')
 
     if Args.valhalla:
-        print('\n#####################################################################\n')
+       # print('\n#####################################################################\n')
         print('Running Valhalla Map Matching (Meili)')
 
         data = data.sort_values(by=['time'], ascending=True)
@@ -155,16 +134,24 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', action='store_true', help='Produce output csv files.')
     parser.add_argument('-v', '--valhalla', action='store_true', help='Use Valhalla map matching (beta).')
     parser.add_argument('-j', '--geojson', action='store_true', help='Produce A geojson output (beta).')
-    parser.add_argument('-d', '--directory', help='GPX files directory.')
+    parser.add_argument('-d', '--directory', nargs='?', const=None, help='GPX files directory (optional).')
     Args = parser.parse_args()
 
-    if Args.directory:
-        process_files(Args.directory)
-    else:
-    
-        data = GetDataFromGPX()
-        data = CreateDataFrame(data)
-        MapPlot(data, Args)
-        ArgsOptions(data)
-        print('Done!')
-        print('\n#####################################################################\n')
+    try:
+        if Args.directory is not None:
+            process_files(Args.directory, Args)
+            
+        elif Args.gpx:
+            data = GetDataFromGPX()
+            data = CreateDataFrame(data)
+            MapPlot(data, Args)
+            ArgsOptions(data, Args)
+            print('Done!')
+            print('\n#####################################################################\n')
+            
+        else:
+            raise Exception("Please specify either a GPX file or a directory of GPX files using the -g or -d flags respectively")
+            
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
