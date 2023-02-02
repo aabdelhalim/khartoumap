@@ -7,21 +7,20 @@ from gpxplotter import (
 import glob
 import natsort
 import warnings
-from Helpers import folium_plot
+from Helpers import folium_plot 
 from DataController.ValhallaController import Valhalla
 
 warnings.filterwarnings("ignore")
 
 def MapPlotDir(data, Args):  
     MapPlot(data , Args)
-
+    
+    
 def process_files(directory, Args):
     tracking = 0
-    processed_files = set()
+    # processed_files = set()
     gpx_files = natsort.natsorted(glob.glob(os.path.join(directory, '*.gpx')))
     for filename in gpx_files:
-        if filename not in processed_files:
-            processed_files.add(filename)
             Args.gpx = filename
             data = GetDataFromGPXFolder(filename)
             for track in data:
@@ -30,9 +29,10 @@ def process_files(directory, Args):
                    ArgsOptions(track_data, Args)
                    tracking += 1
                    print(f'file {tracking} processed: {filename}')
-
-
+                   
+                        
 ################ Plotting ################
+
 
 def MapPlot(data, Args):
     """
@@ -52,6 +52,7 @@ def MapPlot(data, Args):
     print(f'Track map saved in script directory as: {Args.gpx[:-4]}_plot.html')
 
 
+
 def PlotValhalla(data, Args):
     """
     :param data:
@@ -61,22 +62,21 @@ def PlotValhalla(data, Args):
     the_map = folium_plot(data)
     the_map.save(f'{Args.gpx[:-4]}_valhalla_plot.html')
     print(f'Map Matching Successful! See: {Args.gpx[:-4]}_valhalla_plot.html')
-
-
+    
+    
 def GetDataFromGPXFolder(file_path=None):
     tracks = []
     for track in read_gpx_file(file_path):
         tracks.append(track)
     return tracks
-
-
-
+    
+    
 def GetDataFromGPX():
     for track in read_gpx_file(Args.gpx):
         data = track
     return data
-
-
+    
+    
 def CreateDataFrame(GPXdata):
     """
     :param GPXdata:
@@ -93,14 +93,14 @@ def CreateDataFrame(GPXdata):
     data = pd.DataFrame({'lat': lats, 'lon': lons, 'time': time,
                          'distance': distance, 'elevation': elevation, 'speed': speed})
     return data
-
-
+    
+    
 def ArgsOptions(data , Args = None):
     """
     :param data:
     :return:
     """
-
+    
     if Args.output:
         # data.drop(['time'], axis=1).to_csv(f'{Args.gpx[:-4]}_output.csv', index=False)
         data.to_csv(f'{Args.gpx[:-4]}.csv', index=False)
@@ -136,7 +136,8 @@ if __name__ == '__main__':
     parser.add_argument('-j', '--geojson', action='store_true', help='Produce A geojson output (beta).')
     parser.add_argument('-d', '--directory', nargs='?', const=None, help='GPX files directory (optional).')
     Args = parser.parse_args()
-
+    
+    
     try:
         if Args.directory is not None:
             process_files(Args.directory, Args)
