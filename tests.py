@@ -6,14 +6,14 @@ from gpxplotter import read_gpx_file
 import glob
 import natsort
 import warnings
-import process_gpx_fixed
+import process_gpx
 from Helpers import folium_plot
 from DataController.ValhallaController import Valhalla
 import requests_mock
 
 import datetime
 
-from process_gpx_fixed import *
+from process_gpx import *
 
 
 class TestMapPlotting(unittest.TestCase):
